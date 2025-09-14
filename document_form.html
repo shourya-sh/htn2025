@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ template.name }} - LegalDocGen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .form-container, .prompt-container, .result-container {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-header .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .form-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-header p {
+            color: #718096;
+            font-size: 1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+        .form-label.required::after {
+            content: ' *';
+            color: #e53e3e;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        .submit-btn, .next-btn, .skip-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .submit-btn:hover, .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .skip-btn {
+            background: #718096;
+            margin-top: 0.5rem;
+        }
+
+        .skip-btn:hover {
+            background: #4a5568;
+        }
+
+        .submit-btn:disabled, .next-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .prompt-container {
+            display: none;
+        }
+
+        .prompt-container.show {
+            display: block;
+        }
+
+        .prompt-message {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .prompt-message p {
+            color: #2d3748;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .prompt-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .result-container {
+            display: none;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .result-header h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-content {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 2rem;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .download-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .download-btn:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 1rem;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #718096;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .step.active .step-number {
+            background: #667eea;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #48bb78;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-container, .prompt-container {
+                padding: 1.5rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← Back to Documents</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>{{ template.name }}</h1>
+            <p>Fill in the essential details and we'll help you complete the document</p>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <span>Essential Info</span>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <span>Additional Details</span>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <span>Generate</span>
+            </div>
+        </div>
+
+        <div class="form-container" id="essentialForm">
+            <div class="form-header">
+                <span class="icon">{{ template.icon }}</span>
+                <h2>Essential Information</h2>
+                <p>Let's start with the basic details needed for your {{ template.name }}</p>
+            </div>
+
+            <form id="documentForm">
+                <div class="form-grid">
+                    {% for field in template.essential_fields %}
+                    <div class="form-group {% if field.type == 'textarea' %}full-width{% endif %}">
+                        <label class="form-label {% if field.required %}required{% endif %}">
+                            {{ field.label }}
+                        </label>
+                        
+                        {% if field.type == 'textarea' %}
+                            <textarea 
+                                name="{{ field.name }}" 
+                                class="form-input form-textarea" 
+                                placeholder="Enter {{ field.label.lower() }}"
+                                {% if field.required %}required{% endif %}
+                            ></textarea>
+                        {% elif field.type == 'select' %}
+                            <select 
+                                name="{{ field.name }}" 
+                                class="form-input form-select"
+                                {% if field.required %}required{% endif %}
+                            >
+                                <option value="">Select {{ field.label.lower() }}</option>
+                                {% for option in field.options %}
+                                <option value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            <input 
+                                type="{{ field.type }}" 
+                                name="{{ field.name }}" 
+                                class="form-input" 
+                                placeholder="Enter {{ field.label.lower() }}"
+                                {% if field.required %}required{% endif %}
+                            >
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Continue to Additional Details
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing your information...</p>
+            </div>
+        </div>
+
+        <div class="prompt-container" id="promptContainer">
+            <div class="form-header">
+                <span class="icon">💬</span>
+                <h2>Additional Information</h2>
+                <p>Let's gather some more details to make your document complete</p>
+            </div>
+
+            <div class="prompt-message" id="promptMessage">
+                <!-- AI prompt will be inserted here -->
+            </div>
+
+            <textarea 
+                class="prompt-input" 
+                id="additionalInfo" 
+                placeholder="Provide any additional information here..."
+            ></textarea>
+
+            <button class="next-btn" id="generateBtn">Generate Document</button>
+            <button class="skip-btn" id="skipBtn">Skip Additional Details</button>
+        </div>
+
+        <div class="result-container" id="resultContainer">
+            <div class="result-header">
+                <h3>Generated {{ template.name }}</h3>
+                <p>Your document has been successfully generated</p>
+            </div>
+            <div class="result-content" id="resultContent"></div>
+            <button class="download-btn" onclick="downloadDocument()">Download as TXT</button>
+        </div>
+    </div>
+
+    <script>
+        let formData = {};
+
+        document.getElementById('documentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            
+            // Show loading
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            
+            // Collect form data
+            const formDataObj = new FormData(this);
+            formData = {};
+            for (let [key, value] of formDataObj.entries()) {
+                formData[key] = value;
+            }
+            
+            try {
+                const response = await fetch('/prompt/{{ doc_type }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update step indicator
+                    document.getElementById('step1').classList.remove('active');
+                    document.getElementById('step1').classList.add('completed');
+                    document.getElementById('step2').classList.add('active');
+                    
+                    // Show prompt container
+                    document.getElementById('promptMessage').innerHTML = `<p>${result.prompt}</p>`;
+                    document.getElementById('essentialForm').style.display = 'none';
+                    document.getElementById('promptContainer').classList.add('show');
+                } else {
+                    alert('Error getting additional prompts: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        });
+
+        document.getElementById('generateBtn').addEventListener('click', async function() {
+            const additionalInfo = document.getElementById('additionalInfo').value;
+            const generateBtn = document.getElementById('generateBtn');
+            const skipBtn = document.getElementById('skipBtn');
+            
+            generateBtn.disabled = true;
+            skipBtn.disabled = true;
+            
+            // Add additional info to form data
+            formData.additional_info = additionalInfo;
+            
+            try {
+                const response = await fetch('/generate/{{ doc_type }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update step indicator
+                    document.getElementById('step2').classList.remove('active');
+                    document.getElementById('step2').classList.add('completed');
+                    document.getElementById('step3').classList.add('active');
+                    
+                    // Show result
+                    document.getElementById('resultContent').textContent = result.document;
+                    document.getElementById('promptContainer').classList.remove('show');
+                    document.getElementById('resultContainer').classList.add('show');
+                    document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Error generating document: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error generating document: ' + error.message);
+            } finally {
+                generateBtn.disabled = false;
+                skipBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('skipBtn').addEventListener('click', async function() {
+            const generateBtn = document.getElementById('generateBtn');
+            const skipBtn = document.getElementById('skipBtn');
+            
+            generateBtn.disabled = true;
+            skipBtn.disabled = true;
+            
+            // Generate without additional info
+            formData.additional_info = '';
+            
+            try {
+                const response = await fetch('/generate/{{ doc_type }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update step indicator
+                    document.getElementById('step2').classList.remove('active');
+                    document.getElementById('step2').classList.add('completed');
+                    document.getElementById('step3').classList.add('active');
+                    
+                    // Show result
+                    document.getElementById('resultContent').textContent = result.document;
+                    document.getElementById('promptContainer').classList.remove('show');
+                    document.getElementById('resultContainer').classList.add('show');
+                    document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Error generating document: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error generating document: ' + error.message);
+            } finally {
+                generateBtn.disabled = false;
+                skipBtn.disabled = false;
+            }
+        });
+
+        function downloadDocument() {
+            const content = document.getElementById('resultContent').textContent;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '{{ template.name }}.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html> 
